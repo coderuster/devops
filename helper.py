@@ -4,7 +4,7 @@ import urllib.request
 import json
 
 def get_cmd(name,number):
-    return f"raw.githubusercontent.com/coderuster/fds/main/{number}/{name}"
+    return f"raw.githubusercontent.com/coderuster/devops/main/{number}/{name}"
 
 
 def get_files(repo_url, folder_path):
@@ -49,8 +49,8 @@ def run_command(cmd):
     return "ERROR"
 
 def main():
-    number=input("1[arithmetic operation]\n2[1D array]\n3[2D array]\n4[alice,bob]\n5[pandas]\n6[text processing]\n7[2D array]\nChoose: ").strip()
-    repo_url = "https://api.github.com/repos/coderuster/fds/"
+    number=input("1\n2\n3\n4\n5\n6\n7\n8\n9\n10\nChoose ").strip()
+    repo_url = "https://api.github.com/repos/coderuster/devops/"
     files=get_files(repo_url,number)
     # files=["server.py","client.py"]
     for f in files:
