@@ -1,0 +1,56 @@
+pom.xml
+<dependencies>
+    <!-- JUnit dependency -->
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.13.2</version>
+        <scope>test</scope>
+    </dependency>
+
+    <!-- Additional dependencies for your regression testing -->
+    <!-- e.g., Selenium, Cucumber, etc. -->
+</dependencies>
+---------------
+Step 3: Modify Pipeline YAML to Include Regression Test Execution
+
+Open the pipeline YAML file.
+Add a task to run regression tests using Maven. You can use the test goal to execute tests during the build.
+
+# Example Maven pipeline YAML to run regression tests
+
+trigger:
+- main # Change to the branch that triggers the pipeline
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Maven task for building the project
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'  # Path to the POM file
+    goals: 'clean test'
+    options: '-X'  # Optional: Enable Maven debug logging
+    mavenOptions: '-Xmx3072m'  # Memory allocation for JVM
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+  displayName: 'Run Regression Tests'
+
+----------
+junit
+@RunWith(Categories.class)
+@IncludeCategory(RegressionTests.class)
+public class RegressionTestSuite {
+    // This will run all tests marked as part of the RegressionTests category
+}
+------------
+testng.xml
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="Regression Test Suite" parallel="false">
+    <test name="Regression Tests">
+        <classes>
+            <class name="com.example.tests.RegressionTests"/>
+        </classes>
+    </test>
+</suite>

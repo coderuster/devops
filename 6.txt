@@ -1,0 +1,82 @@
+In any Linux VM
+sudo apt update
+sudo apt install ansible -y
+-----------
+Playbook'
+mkdir webapp-playbook
+cd webapp-playbook
+touch webapp-setup.yml
+---------------
+Add this code in yml file
+---
+- name: Setup Web Application Infrastructure
+  hosts: web_servers  # The group of target machines
+  become: yes         # Run tasks with sudo privileges
+  vars:
+    http_port: 80
+    server_admin: webmaster@localhost
+    document_root: /var/www/html
+  tasks:
+
+    - name: Install Apache web server
+      apt:
+        name: apache2
+        state: present
+        update_cache: yes
+
+    - name: Ensure Apache is running and enabled on boot
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Deploy index.html to the web root directory
+      copy:
+        src: ./files/index.html  # Path to your HTML file on the control node
+        dest: "{{ document_root }}/index.html"
+        mode: '0644'
+
+    - name: Set up virtual host configuration
+      template:
+        src: ./templates/vhost.conf.j2  # Path to your virtual host template
+        dest: /etc/apache2/sites-available/000-default.conf
+      notify:
+        - Restart Apache
+
+  handlers:
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
+
+------------------
+mkdir files
+touch files/index.html
+
+index.html
+<html>
+  <head><title>My Web App</title></head>
+  <body><h1>Welcome to My Web Application</h1></body>
+</html>
+--------------
+mkdir templates
+touch templates/vhost.conf.j2
+
+vhost.conf.j2
+<VirtualHost *:{{ http_port }}>
+  ServerAdmin {{ server_admin }}
+  DocumentRoot {{ document_root }}
+  ErrorLog ${APACHE_LOG_DIR}/error.log
+  CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+-----------------------
+reate the Inventory File:
+In the webapp-playbook directory, create an inventory file listing the target servers:
+
+[web_servers]
+192.168.1.10  # Example IP of a target server
+192.168.1.11  # Another target server
+
+-----------------
+Run this command
+ansible-playbook -i inventory webapp-setup.yml

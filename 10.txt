@@ -1,0 +1,89 @@
+sudo apt update
+sudo apt upgrade -y
+sudo apt install ansible -y
+-----------
+Create a file named inventory that lists the IP addresses or hostnames of the servers where tasks will be automated. 
+[webservers]
+192.168.1.100
+192.168.1.101
+
+[dbservers]
+192.168.1.102
+----------
+ansible -i inventory webservers -m ping
+-----------
+webserver_setup.yml
+
+---
+- name: Setup web server infrastructure
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Install Apache web server
+      apt:
+        name: apache2
+        state: present
+        update_cache: yes
+
+    - name: Start Apache service
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Copy custom index.html to web root
+      copy:
+        src: ./index.html
+        dest: /var/www/html/index.html
+
+    - name: Open HTTP port in firewall
+      ufw:
+        rule: allow
+        port: 80
+        proto: tcp
+
+--------------
+index.html
+<html>
+<head><title>Welcome</title></head>
+<body><h1>Welcome to your automated web server!</h1></body>
+</html>
+----------------
+dbserver_setup.yml
+
+---
+- name: Setup database server infrastructure
+  hosts: dbservers
+  become: yes
+  tasks:
+    - name: Install MySQL server
+      apt:
+        name: mysql-server
+        state: present
+        update_cache: yes
+
+    - name: Start MySQL service
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Create a database
+      mysql_db:
+        name: lab_database
+        state: present
+
+    - name: Create a user with all privileges on the database
+      mysql_user:
+        name: lab_user
+        password: password123
+        priv: 'lab_database.*:ALL'
+        state: present
+
+----------------------
+ansible-playbook -i inventory webserver_setup.yml
+ansible-playbook -i inventory dbserver_setup.yml
+-----------
+to verify
+mysql -u lab_user -p
+SHOW DATABASES;

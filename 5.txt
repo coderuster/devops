@@ -1,0 +1,90 @@
+Azure CLI 
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+----------------
+JenkinsFile (Web App)
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK11'
+        maven 'Maven3'
+    }
+
+    environment {
+        AZURE_CREDENTIALS = credentials('azure-service-principal')  // Stored in Jenkins
+        AZURE_APP_NAME = 'your-azure-app-name'
+        RESOURCE_GROUP = 'your-resource-group'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-repo/java-project.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean install'  // Build and run unit tests
+            }
+        }
+
+        stage('Deploy to Azure Web App') {
+            steps {
+                script {
+                    withCredentials([azureServicePrincipal(
+                        credentialsId: 'azure-service-principal', // Replace with your Azure credentials ID
+                        subscriptionIdVariable: 'AZURE_SUBSCRIPTION_ID',
+                        clientIdVariable: 'AZURE_CLIENT_ID',
+                        clientSecretVariable: 'AZURE_CLIENT_SECRET',
+                        tenantIdVariable: 'AZURE_TENANT_ID')]) {
+                        
+                        // Deploy the generated JAR or WAR file to the Azure Web App
+                        sh """
+                        az webapp deployment source config-zip \
+                        --resource-group $RESOURCE_GROUP \
+                        --name $AZURE_APP_NAME \
+                        --src-path target/*.jar
+                        """
+                    }
+                }
+            }
+        }
+    }
+}
+--------------------
+JenkinsFile(Azure VM)
+
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK11'
+        maven 'Maven3'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-repo/java-project.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Deploy to Azure VM') {
+            steps {
+                sshagent(['your-ssh-credentials-id']) {
+                    sh """
+                    scp -o StrictHostKeyChecking=no target/*.jar azureuser@<VM_IP>:/var/www/app/
+                    ssh azureuser@<VM_IP> 'sudo systemctl restart tomcat'
+                    """
+                }
+            }
+        }
+    }
+}

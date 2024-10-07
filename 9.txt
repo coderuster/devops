@@ -1,0 +1,56 @@
+In ubuntu
+
+sudo apt update
+sudo apt install openjdk-11-jdk -y
+----------------
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo tee \
+/usr/share/keyrings/jenkins-keyring.asc > /dev/null
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+/etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt update
+sudo apt install jenkins -y
+----------------
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+---------------
+Access Jenkins by navigating to http://<your-server-ip>:8080 in a browser. Use the initial admin password found in /var/lib/jenkins/secrets/initialAdminPassword to unlock Jenkins.
+----------
+if Using Maven
+mvn clean install
+--------
+JenkinsFile code
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/sampleuser/java-demo-app.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+        stage('Test') {
+            steps {
+                junit 'target/surefire-reports/*.xml'
+            }
+        }
+        stage('Archive') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
+    }
+    post {
+        always {
+            mail to: 'developer@example.com',
+                subject: "Build ${currentBuild.fullDisplayName} Result: ${currentBuild.currentResult}",
+                body: "Check the Jenkins job: ${env.BUILD_URL}"
+        }
+    }
+}

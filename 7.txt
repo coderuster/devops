@@ -1,0 +1,46 @@
+sudo apt update
+sudo apt install openjdk-11-jdk
+------------------
+sudo apt install gradle
+gradle -v 
+----------------
+mkdir gradle-demo-app
+cd gradle-demo-app
+gradle init
+----------
+touch src/main/java/App.java
+App.java
+public class App {
+    public static void main(String[] args) {
+        System.out.println("Hello, World from Gradle!");
+    }
+}
+-------
+build.gradle
+plugins {
+    // Apply the application plugin to add support for building a CLI application
+    id 'application'
+}
+
+repositories {
+    // Use Maven Central repository
+    mavenCentral()
+}
+
+dependencies {
+    // This dependency is used by the application
+    implementation 'com.google.guava:guava:31.0.1-jre'
+
+    // Use JUnit test framework
+    testImplementation 'junit:junit:4.13.2'
+}
+
+// Define the main class for the application
+application {
+    mainClassName = 'App'
+}
+------------
+type this in CLI
+
+gradle build
+gradle run

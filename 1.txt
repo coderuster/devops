@@ -1,0 +1,54 @@
+Choose YAML when prompted.
+Azure DevOps will scan your repository and suggest a default Maven pipeline template. You can modify the YAML file to suit your requirements.
+Example Maven build pipeline YAML:
+
+# Maven pipeline for a Java project
+trigger:
+- main # Change to the branch you want to trigger builds from
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'  # Path to your POM file
+    goals: 'clean install'
+    options: '-X'  # Optional: Additional Maven options
+    mavenOptions: '-Xmx3072m'  # JVM memory allocation
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+  displayName: 'Maven Build'
+
+--------------------
+pom.xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>my-java-app</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>My Java App</name>
+
+  <dependencies>
+    <!-- Your Maven dependencies here -->
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+

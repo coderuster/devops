@@ -1,0 +1,42 @@
+Install jdk
+sudo apt install openjdk-11-jdk -y
+-------------
+Install Maven
+sudo apt install maven -y
+-------------------
+JenkinsFile
+
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK11'      // JDK configured in Global Tools
+        maven 'Maven3'    // Maven configured in Global Tools
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/your-repo/java-project.git'  // Git repository URL
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean install'  // Maven command to build the project
+            }
+        }
+
+        stage('Test') {
+            steps {
+                junit '**/target/surefire-reports/*.xml'  // Publish test results
+            }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
+            }
+        }
+    }
+}
