@@ -61,7 +61,8 @@ def main():
         content = run_command(cmd)
 
         # Save the content to a local file
-        with open(f, "w") as file:
+        # Prevent auto-opening by just writing without any system call
+        with open(f, "w", encoding="utf-8") as file:
             file.write(content)
             print(f"Saved {f} locally.")
     
