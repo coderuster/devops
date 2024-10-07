@@ -1,62 +1,70 @@
-import socket
-import ssl
 import urllib.request
 import json
 
-def get_cmd(name,number):
-    return f"raw.githubusercontent.com/coderuster/devops/main/{number}/{name}"
+# Function to construct the URL for fetching raw content of a file from GitHub
+def get_cmd(name, number):
+    return f"https://raw.githubusercontent.com/coderuster/devops/main/{number}/{name}"
 
-
+# Function to fetch the files from a specific folder in the repository
 def get_files(repo_url, folder_path):
     api_url = f"{repo_url.rstrip('/')}/contents/{folder_path}"
-    ret=[]
-    with urllib.request.urlopen(api_url) as response:
-        if response.getcode() == 200:
-            contents = json.loads(response.read())
-            
-            for item in contents:
-                if item["type"] == "file":
-                    filename = item["name"]
-                    ret.append(filename)
-        else:
-            print(f"Failed to fetch folder contents. Status code: {response.getcode()}")
+    headers = {"User-Agent": "Mozilla/5.0"}  # Required by GitHub's API
+    req = urllib.request.Request(api_url, headers=headers)
+    ret = []
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            if response.getcode() == 200:
+                contents = json.loads(response.read())
+                # Collect only files
+                files = [item["name"] for item in contents if item["type"] == "file"]
+                ret = files
+            else:
+                print(f"Failed to fetch folder contents. Status code: {response.getcode()}")
+    except Exception as e:
+        print(f"Error fetching files: {e}")
     return ret
+
+# Function to download and return the content of a file from GitHub
 def https_get(url):
-    hostname, _, path = url.partition('/')
-    if not path:
-        path = '/'
-    with socket.create_connection((hostname, 443)) as sock:
-        context = ssl.create_default_context()
-        with context.wrap_socket(sock, server_hostname=hostname) as ssock:
-            request = f"GET {path} HTTP/1.1\r\nHost: {hostname}\r\nConnection: close\r\n\r\n"
-            ssock.sendall(request.encode())
+    headers = {"User-Agent": "Mozilla/5.0"}  # Required to avoid API errors
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req) as response:
+            if response.getcode() == 200:
+                return response.read().decode()
+            else:
+                return f"Error: Unable to fetch content. Status code: {response.getcode()}"
+    except Exception as e:
+        return f"Error: {e}"
 
-            response = b""
-            while True:
-                data = ssock.recv(4096)
-                if not data:
-                    break
-                response += data
-    body_start = response.find(b"\r\n\r\n") + len(b"\r\n\r\n")
-    return response[body_start:].decode()
-
+# Function to run the whole operation
 def run_command(cmd):
-  try:
-      data=https_get(cmd)
-      return data
-  except Exception as e:
-    print(f"Error: {e}")
-    return "ERROR"
+    data = https_get(cmd)
+    return data
 
 def main():
-    number=input("1\n2\n3\n4\n5\n6\n7\n8\n9\n10\nChoose ").strip()
-    repo_url = "https://api.github.com/repos/coderuster/devops/"
-    files=get_files(repo_url,number)
-    # files=["server.py","client.py"]
+    number = input("1\n2\n3\n4\n5\n6\n7\n8\n9\n10\nChoose: ").strip()
+    repo_url = "https://api.github.com/repos/coderuster/devops"
+    
+    # Get the list of files from the selected folder
+    files = get_files(repo_url, number)
+
+    if not files:
+        print("No files found or an error occurred.")
+        return
+
+    # Download each file and save it locally
     for f in files:
-        cmd=get_cmd(f,number)
-        content=run_command(cmd)
-        with open(f,"w") as file:
+        cmd = get_cmd(f, number)
+        print(f"Fetching content from {cmd}...")  # Feedback for the user
+        content = run_command(cmd)
+
+        # Save the content to a local file
+        with open(f, "w") as file:
             file.write(content)
-if __name__=="__main__":
+            print(f"Saved {f} locally.")
+    
+if __name__ == "__main__":
     main()
+
